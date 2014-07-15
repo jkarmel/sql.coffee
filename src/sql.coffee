@@ -1,5 +1,21 @@
 _str = require 'underscore.string'
 
+CREATE_TABLE_REGEX = ///
+  ^create\stable               # match CREATE TABLE
+  \s(\b[a-zA-A_]*\b)           # match table name
+  \s\((.*)\)                  # match table definition
+///i
+
+INSERT_INTO_REGEX = ///
+  ^insert\sinto
+  \s(\b[a-zA-A_]*\b)           # match table name
+  \s\((.*)\)                   # match table definition
+  \svalues
+  \s\((.*)\)                   # match table definition
+///i
+
+
+
 sql =
   exec: (statement) ->
     createDatabaseRegex = /^create database (\b.*\b)/i
@@ -11,28 +27,48 @@ sql =
         tables: {}
       }
   dbExec: (db, statement) ->
-    createTableRegex = ///
-      ^create\stable               # match CREATE TABLE
-      \s(\b[a-zA-A_]*\b)           # match table name
-      \s\((.*)\)                  # match table definition
-      ///i
-    if match = statement.match createTableRegex
-      [fullMatch, tableName, tableDefinition] = match
-      definition = for columnDefinition in tableDefinition.split ','
-        [columnName, columnTypeDefinition] = _str.trim(columnDefinition).split ' '
-        columnType = switch
-          when columnTypeDefinition.match /varchar/
-            name: columnName
-            type: 'character varying'
-            params:
-              maxLength: parseInt columnTypeDefinition.match(/\(([0-9]*)\)/)[1]
-          when columnTypeDefinition.match /int/
-            name: columnName
-            type: 'int'
+    if statement.match CREATE_TABLE_REGEX
+      sql.createTable db, statement
+    if statement.match INSERT_INTO_REGEX
+      sql.insertInto db, statement
+
+  createTable: (db, statement) ->
+    match = statement.match CREATE_TABLE_REGEX
+    [fullMatch, tableName, tableDefinition] = match
+    definition = for columnDefinition in tableDefinition.split ','
+      [columnName, columnTypeDefinition] = _str.trim(columnDefinition).split ' '
+      columnType = switch
+        when columnTypeDefinition.match /varchar/
+          name: columnName
+          type: 'character varying'
+          params:
+            maxLength: parseInt columnTypeDefinition.match(/\(([0-9]*)\)/)[1]
+        when columnTypeDefinition.match /int/
+          name: columnName
+          type: 'int'
 
 
-      db.tables[tableName] = {
-        definition
-      }
+    db.tables[tableName] = {
+      definition
+      data: []
+    }
+
+  insertInto: (db, statement) ->
+    parseVals = (string) ->
+      trimed = _str.trim string
+      if parseInt(trimed).toString() is trimed
+        parseInt trimed
+      else
+        trimed.match(/\'(.*)\'/)[1]
+    [
+      fullMatch
+      tableName
+      columnsString
+      valuesString
+    ] = statement.match INSERT_INTO_REGEX
+    valuesString
+    columns = columnsString.split ' '
+    values = valuesString.split(',').map(parseVals)
+    db.tables[tableName].data.push values
 
 module.exports = sql

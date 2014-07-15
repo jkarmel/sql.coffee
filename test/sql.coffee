@@ -2,6 +2,9 @@ assert = require 'assert'
 sql = require '../src/sql'
 
 describe 'sql', ->
+  db = null
+  beforeEach ->
+    db = {tables: {}}
   describe 'CREATE DATABASE', ->
     it 'should take a database name and return a database object', ->
       dbName = "FirstDB"
@@ -10,20 +13,17 @@ describe 'sql', ->
       assert.deepEqual db.tables, {}
   describe 'CREATE TABLE', ->
     it 'create a table with that name', ->
-      db = {tables: []}
       sql.dbExec db, "CREATE TABLE users (name varchar(100))"
       assert db.tables.users
 
     describe 'table definition', ->
       it 'should record the definition of the table', ->
-        db = {tables: []}
         sql.dbExec db, "CREATE TABLE users (name varchar(100))"
         assert.deepEqual db.tables.users.definition, [
           {name: 'name', type: 'character varying', params: {maxLength: 100}}
         ]
 
       it 'should record multiple column definitions', ->
-        db = {tables: []}
         sql.dbExec db, """
           CREATE TABLE users
           (name varchar(100), nickname varchar(50))
@@ -34,7 +34,6 @@ describe 'sql', ->
         ]
 
       it 'can record int type columns', ->
-        db = {tables: []}
         sql.dbExec db, """
           CREATE TABLE users
           (age int)
@@ -43,3 +42,17 @@ describe 'sql', ->
           {name: 'age', type: 'int'}
         ]
 
+  describe 'INSERT INTO', ->
+    beforeEach ->
+      sql.dbExec db, """
+        CREATE TABLE users
+        (name varchar(100), age int)
+      """
+    it 'should insert values into the table based on the column names', ->
+      sql.dbExec db, """
+        INSERT INTO users
+        (name, age)
+        values
+        ('Baby', 1)
+      """
+      assert.deepEqual db.tables.users.data[0], ["Baby", 1]
