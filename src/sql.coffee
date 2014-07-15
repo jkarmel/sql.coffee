@@ -1,3 +1,5 @@
+_str = require 'underscore.string'
+
 sql =
   exec: (statement) ->
     createDatabaseRegex = /^create database (\b.*\b)/i
@@ -17,9 +19,9 @@ sql =
     if match = statement.match createTableRegex
       [fullMatch, tableName, tableDefinition] = match
       definition = for columnDefinition in tableDefinition.split ','
-        [columnName, columnTypeDefinition] = columnDefinition.split ' '
+        [columnName, columnTypeDefinition] = _str.trim(columnDefinition).split ' '
         columnType = switch
-          when columnTypeDefinition.match 'varchar'
+          when columnTypeDefinition.match /varchar/
             {
               name: columnName
               type: 'character varying'

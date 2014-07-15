@@ -14,9 +14,22 @@ describe 'sql', ->
       sql.dbExec db, "CREATE TABLE users (name varchar(100))"
       assert db.tables.users
 
-    it 'should record the definition of the table', ->
-      db = {tables: []}
-      sql.dbExec db, "CREATE TABLE users (name varchar(100))"
-      assert.deepEqual db.tables.users.definition, [
-        {name: 'name', type: 'character varying', params: {maxLength: 100}}
-      ]
+    describe 'table definition', ->
+      it 'should record the definition of the table', ->
+        db = {tables: []}
+        sql.dbExec db, "CREATE TABLE users (name varchar(100))"
+        assert.deepEqual db.tables.users.definition, [
+          {name: 'name', type: 'character varying', params: {maxLength: 100}}
+        ]
+
+      it 'should record multiple column definitions', ->
+        db = {tables: []}
+        sql.dbExec db, """
+          CREATE TABLE users
+          (name varchar(100), nickname varchar(50))
+        """
+        assert.deepEqual db.tables.users.definition, [
+          {name: 'name', type: 'character varying', params: {maxLength: 100}}
+          {name: 'nickname', type: 'character varying', params: {maxLength: 50}}
+        ]
+
