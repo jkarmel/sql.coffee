@@ -9,7 +9,14 @@ describe 'sql', ->
       assert.equal db.name, dbName
       assert.deepEqual db.tables, {}
   describe 'CREATE TABLE', ->
-    it 'should take a database and a CREATE TABLE statement and make a table with that name', ->
+    it 'create a table with that name', ->
       db = {tables: []}
       sql.dbExec db, "CREATE TABLE users (name varchar(100))"
       assert db.tables.users
+
+    it 'should record the definition of the table', ->
+      db = {tables: []}
+      sql.dbExec db, "CREATE TABLE users (name varchar(100))"
+      assert.deepEqual db.tables.users.definition, [
+        {name: 'name', type: 'character varying', params: {maxLength: 100}}
+      ]
