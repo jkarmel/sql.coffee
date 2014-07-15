@@ -22,12 +22,14 @@ sql =
         [columnName, columnTypeDefinition] = _str.trim(columnDefinition).split ' '
         columnType = switch
           when columnTypeDefinition.match /varchar/
-            {
-              name: columnName
-              type: 'character varying'
-              params:
-                maxLength: parseInt columnTypeDefinition.match(/\(([0-9]*)\)/)[1]
-            }
+            name: columnName
+            type: 'character varying'
+            params:
+              maxLength: parseInt columnTypeDefinition.match(/\(([0-9]*)\)/)[1]
+          when columnTypeDefinition.match /int/
+            name: columnName
+            type: 'int'
+
 
       db.tables[tableName] = {
         definition

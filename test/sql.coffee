@@ -33,3 +33,13 @@ describe 'sql', ->
           {name: 'nickname', type: 'character varying', params: {maxLength: 50}}
         ]
 
+      it 'can record int type columns', ->
+        db = {tables: []}
+        sql.dbExec db, """
+          CREATE TABLE users
+          (age int)
+        """
+        assert.deepEqual db.tables.users.definition, [
+          {name: 'age', type: 'int'}
+        ]
+
