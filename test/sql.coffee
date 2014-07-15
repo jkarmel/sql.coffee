@@ -56,3 +56,22 @@ describe 'sql', ->
         ('Baby', 1)
       """
       assert.deepEqual db.tables.users.data[0], ["Baby", 1]
+
+  describe 'SELECT *', ->
+    beforeEach ->
+      db =
+        tables:
+          users:
+            data: [
+              ["First", 1]
+              ["Second", 2]
+            ]
+
+    it 'should be able to return all the values from the table', ->
+      usersList = sql.dbExec db, """
+        SELECT * FROM users
+      """
+      assert.deepEqual usersList, [
+        ["First",  1]
+        ["Second", 2]
+      ]
